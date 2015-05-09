@@ -17,88 +17,12 @@ from astropy import log as logger
 import astropy.units as u
 
 # Project
-from streammorphology import project_path
+from scf import project_path
+import scf.potential as sp
 
-base_SCFPAR = """empty           comment
-empty            comment
-"../../scf/SCFBI" path to SCFBI file
-{nsteps:d}           nsteps
-{ncen:d}             noutlog
-{nsnap:d}            noutbod
-{dt:.8f}    dtime
-1.0             G
-TRUE            self gravitating?
-FALSE           input expansion coefficients?
-FALSE           output expansion coefficients
-FALSE           zero odd expansion coefficients
-FALSE           zero even expansion coefficients
-FALSE           fix zero CoM acceleration?
-TRUE            orbiting in an external potential?
-500             how often to re-adjust center?
-{ntide:d}             number of steps to turn on MW potential
-{rscale:.1e}           satellite scale (kpc)
-{mass:.1e}           satellite mass (Msun)
-{x[0]:.8f} {x[1]:.8f} {x[2]:.8f}
-{v[0]:.5f} {v[1]:.5f} {v[2]:.5f}
-"""
-
-base_Makefile = """scf:
-        gfortran ../../scf/scf_nfw.f ../../scf/{potentialname:s}.f -o scf
-
-clean:
-        rm scf
-        rm SNAP*
-        rm SCFCPU SCFCEN SCFORB SCFOUT SCFLOG
-"""
-
-base_SCFPOT = """(comment) Miyamoto-Nagai disk parameters
-6.5             a [kpc]
-0.26            b [kpc]
-0          mass scale [Msun]
-(comment) Hernquist spheroid parameters
-0.3             c [kpc]
-0            mass scale [Msun]
-(comment) Triaxial NFW halo parameters
-30.             rs (scale radius) [kpc]
-532.24177023   vh (scale velocity) [km/s]
-1.             a (major axis)
-0.8              b (intermediate axis)
-0.6             c (minor axis)
-0        phi (use for rotating halo) [radian]
-0        theta (use for rotating halo) [radian]
-0        psi (use for rotating halo) [radian]
-"""
-
-base_submit = """#!/bin/sh
-
-# Directives
-#PBS -N scf_{name}
-#PBS -W group_list=yetiastro
-#PBS -l nodes=1:ppn=1,walltime=8:00:00,mem=8gb
-#PBS -M amp2217@columbia.edu
-#PBS -m abe
-#PBS -V
-
-# Set output and error directories
-#PBS -o localhost:/vega/astro/users/amp2217/pbs_output
-#PBS -e localhost:/vega/astro/users/amp2217/pbs_output
-
-# print date and time to file
-date
-
-#Command to execute Python program
-cd /vega/astro/users/amp2217/projects/morphology/simulations/runs/{name}
-make
-./scf
-/vega/astro/users/amp2217/projects/gary/bin/moviesnap --path=/vega/astro/users/amp2217/projects/morphology/simulations/runs/{name}
-
-date
-
-#End of script
-"""
-
-def main(name, x, v, scfpars, potential_name, overwrite=False, submit=False):
+def main(name, x, v, scfpars, potentials, overwrite=False, submit=False):
     run_path = os.path.abspath(os.path.join(project_path, "simulations", "runs"))
+    template_path = os.path.abspath(os.path.join(project_path, "templates"))
     logger.debug("Run path: {}".format(run_path))
 
     path = os.path.join(run_path, name)
@@ -129,21 +53,62 @@ def main(name, x, v, scfpars, potential_name, overwrite=False, submit=False):
     v = map(float, v_vals.split(',')) * u.Unit(v_unit)
     v = v.to(u.km/u.s).value
 
+    # combine all of the different blocks
+    allblocks = dict()
+    for potential_name in potentials:
+        blocks = getattr(sp,potential_name)()
+        for k,v in blocks.items():
+            if k not in allblocks:
+                allblocks[k] = ""
+
+            allblocks[k] += v + "\n\n"
+
+    # ------------------------------------------------------------------------
+    # SCFPAR
+    with open(os.path.join(template_path, "SCFPAR.tpl"), 'r') as f:
+        base_SCFPAR = f.read()
+
     with open(os.path.join(path, "SCFPAR"), 'w') as f:
         f.write(base_SCFPAR.format(x=x, v=v, **scfpars))
 
+    # ------------------------------------------------------------------------
+    # Makefile
+    with open(os.path.join(template_path, "Makefile.tpl"), 'r') as f:
+        base_Makefile = f.read()
+
     with open(os.path.join(path, "Makefile"), 'w') as f:
-        f.write(base_Makefile.format(potentialname=potential_name))
+        f.write(base_Makefile)
 
-    cmd = "unexpand {fn} > {fn}2".format(fn=os.path.join(path, "Makefile"))
-    os.system(cmd)
-    cmd = "mv {fn}2 {fn}".format(fn=os.path.join(path, "Makefile"))
-    os.system(cmd)
+    # cmd = "unexpand {fn} > {fn}2".format(fn=os.path.join(path, "Makefile"))
+    # os.system(cmd)
+    # cmd = "mv {fn}2 {fn}".format(fn=os.path.join(path, "Makefile"))
+    # os.system(cmd)
 
+    # ------------------------------------------------------------------------
+    # potential.h
+    with open(os.path.join(template_path, "potential.h.tpl"), 'r') as f:
+        base_potentialh = f.read()
+
+    with open(os.path.join(path, "potential.h"), 'w') as f:
+        f.write(base_potentialh.format(hblock=allblocks['hblock']))
+
+    # ------------------------------------------------------------------------
+    # potential.f
+    with open(os.path.join(template_path, "potential.f.tpl"), 'r') as f:
+        base_potentialf = f.read()
+
+    with open(os.path.join(path, "potential.f"), 'w') as f:
+        f.write(base_potentialf.format(**allblocks))
+
+    # ------------------------------------------------------------------------
+    # SCFPOT
     with open(os.path.join(path, "SCFPOT"), 'w') as f:
-        f.write(base_SCFPOT)
+        f.write(allblocks['SCFPOT'])
 
     if submit:
+        with open(os.path.join(path, "submit.tpl"), 'r') as f:
+            base_submit = f.read()
+
         with open(os.path.join(path, "submit.sh"), 'w') as f:
             f.write(base_submit.format(name=name, path=path))
 
@@ -187,6 +152,8 @@ if __name__ == '__main__':
                              "cluster/satellite.")
     parser.add_argument("--rscale", dest="rscale", default=None, type=float,
                         help="Scale radius of the cluster/satellite.")
+    parser.add_argument("--SCFBI", dest="scfbi_path", default=None, type=str,
+                        help="Path to an SCFBI file.")
 
     args = parser.parse_args()
 
@@ -220,6 +187,8 @@ if __name__ == '__main__':
     scfpars['ncen'] = args.ncen
     scfpars['nsnap'] = args.nsnap
     scfpars['ntide'] = args.ntide
+    if args.scfbi_path is None:
+        scfpars['SCFBIpath'] = os.path.abspath(os.path.join(project_path, 'src', 'SCFBI'))
 
     main(name=args.name, x=args.x, v=args.v, scfpars=scfpars,
          potential_name=args.potential, overwrite=args.overwrite,
