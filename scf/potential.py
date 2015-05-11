@@ -33,10 +33,10 @@ C           Miyamoto-Nagai parameters
 
     pot_acc = """
 C     Compute potential, acceleration for Miyamoto-Nagai
-      sqz2b2 = sqrt(z2 + b*b)
+      sqz2b2 = DSQRT(z2 + b*b)
       tdr = GM/(r2 + (a + sqz2b2)**2)**1.5
       tdz = tdr*(a/sqz2b2 + 1.)
-      phim = -GM/sqrt(r2+(a+sqz2b2)**2)
+      phim = -GM/DSQRT(r2+(a+sqz2b2)**2)
       ax(i) = ax(i) - strength*tdr*xx
       ay(i) = ay(i) - strength*tdr*yy
       az(i) = az(i) - strength*tdz*zz
@@ -80,7 +80,7 @@ C           Hernquist parameters
 C     Compute potential, acceleration due to spheroid
       r2 = xx*xx + yy*yy
       z2 = zz*zz
-      rad = sqrt(r2+z2)
+      rad = DSQRT(r2+z2)
       tsrad = GMs/(rad+hs)**2/rad
       phis = -GMs/(rad+hs)
       ax(i) = ax(i) - strength*tsrad*xx
@@ -201,24 +201,22 @@ def LeeSutoTriaxialNFWPotential():
     """
 
     saveblock = """
-       REAL*8 xx,yy,zz,xf,yf,zf
-       REAL*8 phi,theta,psi
-       REAL*8 eb2,ec2,phi0
-       REAL*8 phih,p,r,yor2,zor2,axh,ayh,azh,ax_h,ay_h,az_h
-       REAL*8 coa,boa,cob
-       REAL*8 R11,R12,R13,R21,R22,R23,R31,R32,R33
-       REAL*8 x0,x1,x2,x4,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,
-      &       x16,x17,x18,x19,x20,x21,x22
-
-       SAVE boa,coa,eb2,ec2,c2,phi0,
-      &     R11,R12,R13,R21,R22,R23,R31,R32,R33
+      REAL*8 xf,yf,zf
+      REAL*8 eb2,ec2,phi0,nfw_vh2,fac,Ms,rs
+      REAL*8 phih,p,r,axh,ayh,azh,ax_h,ay_h,az_h
+      REAL*8 coa,boa,cob
+      REAL*8 R11,R12,R13,R21,R22,R23,R31,R32,R33
+      REAL*8 x0,x1,x2,x4,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,
+     &       x16,x17,x18,x19,x20,x21,x22
+      SAVE boa,coa,eb2,ec2,c2,phi0,rs,
+     &     R11,R12,R13,R21,R22,R23,R31,R32,R33
     """
 
-    # TODO: phi0 is wrong below, relative to python definition
     firstc = """
-C           Logarithmic potential parameters
+C           NFW potential parameters
             boa = nfw_b/nfw_a
             coa = nfw_c/nfw_a
+            rs = nfw_rs/ru
 
             eb2 = 1.0d0 - boa*boa
             ec2 = 1.0d0 - coa*coa
@@ -233,43 +231,48 @@ C           Logarithmic potential parameters
             R32 = -sin(theta)*cos(phi)
             R33 = cos(theta)
 
-            phi0 = 0.5 * nfw_vc * nfw_vc
+            nfw_vh2 = nfw_vc*nfw_vc / (DLOG(2.d0) - 0.5 +
+     &                (DLOG(2.d0)-0.75)*eb2 + (DLOG(2.d0)-0.75)*ec2)
+
+            fac = 232443.89128800036
+            Ms = fac * nfw_vh2 * nfw_rs
+            phi0 = Ms / mu / (nfw_rs / ru)
+
     """
 
     pot_acc = """
 C     Compute potential, acceleration due to Logarithmic potential
-      p = r/nfw_rs
-      yor2 = yf*yf/rad/rad
-      zor2 = zf*zf/rad/rad
+      r = DSQRT(xx*xx + yy*yy + zz*zz)
+      p = r/rs
 
-      xx = R11*xf + R12*yf + R13*zf
-      yy = R21*xf + R22*yf + R23*zf
-      zz = R31*xf + R32*yf + R33*zf
+      xf = R11*xx + R12*yy + R13*zz
+      yf = R21*xx + R22*yy + R23*zz
+      zf = R31*xx + R32*yy + R33*zz
 
-      x0 = r + nfw_rs
+      x0 = r + rs
       x1 = x0**2
       x2 = phi0/(12*r**7*x1)
-      x4 = yy*yy
-      x6 = zz*zz
+      x4 = yf*yf
+      x6 = zf*zf
       x7 = eb2*x4 + ec2*x6
-      x8 = nfw_rs**2
+      x8 = rs**2
       x9 = 6*x8
-      x10 = DLOG(x0/nfw_rs)
+      x10 = DLOG(x0/rs)
       x11 = x0*x10
-      x12 = 3*nfw_rs
+      x12 = 3*rs
       x13 = r*x12
-      x14 = xx*xx
+      x14 = xf*xf
       x15 = x13 - x14 - x4 - x6
       x16 = x15 + x9
-      x17 = 6*nfw_rs*x0*(r*x16 - x11*x9)
+      x17 = 6*rs*x0*(r*x16 - x11*x9)
       x18 = x1*x10
       x19 = r**2
       x20 = x0*x19
       x21 = 2*r*x0
-      x22 = -12*r**5*nfw_rs*x0 + 12*x19*x19*nfw_rs*x18 +
+      x22 = -12*r**5*rs*x0 + 12*x19*x19*rs*x18 +
      & x12*x7*(x16*x19 - 18*x18*x8 + x20*(2*r - x12) + x21*
-     & (x15 + 9*x8)) - x20*(eb2 + ec2)*(-6*r*nfw_rs*(x19 - x8) +
-     & 6*nfw_rs*x11*(x19 - 3*x8) + x20*(-4*r + x12) + x21*
+     & (x15 + 9*x8)) - x20*(eb2 + ec2)*(-6*r*rs*(x19 - x8) +
+     & 6*rs*x11*(x19 - 3*x8) + x20*(-4*r + x12) + x21*
      & (-x13 + 2*x14 + 2*x4 + 2*x6 + x9))
 
       phih = phi0*((eb2/2 + ec2/2)*((1/p - 1/p**3)*x10 - 1 + (2*x19/x8
@@ -277,13 +280,14 @@ C     Compute potential, acceleration due to Logarithmic potential
      &      *((x19/x8 - 3*p - 6)/(2*x19/x8*(p + 1)) + 3*x10/p**3) -
      &      x10/p)
 
-      ax_h = -x2*xx*(x17*x7 + x22)
-      ay_h = -x2*yy*(x17*(-x19*eb2 + x7) + x22)
-      az_h = -x2*zz*(x17*(-x19*ec2 + x7) + x22)
+      ax_h = -x2*xf*(x17*x7 + x22)
+      ay_h = -x2*yf*(x17*(-x19*eb2 + x7) + x22)
+      az_h = -x2*zf*(x17*(-x19*ec2 + x7) + x22)
       axh = R11*ax_h + R21*ay_h + R31*az_h
       ayh = R12*ax_h + R22*ay_h + R32*az_h
       azh = R13*ax_h + R23*ay_h + R33*az_h
 
+      potext(i) = potext(i) + phih
       ax(i) = ax(i) + strength*axh
       ay(i) = ay(i) + strength*ayh
       az(i) = az(i) + strength*azh
