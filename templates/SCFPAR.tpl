@@ -1,6 +1,6 @@
 -----------------------    comment
 -----------------------    comment
-{SCFBIpath:s}   path to SCFBI file
+"../../../src/SCFBI"   path to SCFBI file
 {nsteps:d}      nsteps
 {ncen:d}        noutlog
 {nsnap:d}       noutbod

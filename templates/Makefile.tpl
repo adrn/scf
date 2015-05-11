@@ -1,5 +1,5 @@
 scf:
-		gfortran ../../scf/scf.f potential.f -o scf
+		gfortran scf.f potential.f -o scf
 
 clean:
 		rm scf
