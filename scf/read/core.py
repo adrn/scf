@@ -17,7 +17,7 @@ from astropy.table import Table
 import numpy as np
 from gary.units import UnitSystem
 
-__all__ = ["SCFReader"]
+__all__ = ["SCFReader", "tbl_to_w"]
 
 class SCFReader(object):
 
@@ -167,3 +167,24 @@ class SCFReader(object):
             tbl[colname].unit = colunit
 
         return tbl
+
+def tbl_to_w(tbl):
+    """
+    Convert a table-like object with column names 'x', 'y', 'z',
+    'vx', etc. into a single 6D array.
+
+    Parameters
+    ----------
+    tbl : table-like
+        An Astropy table or object with supported string-indexing.
+
+    Returns
+    -------
+    w : :class:`numpy.ndarray`
+        A 6D array with a row for each row in the table. Will have
+        shape `(len(tbl),6)`.
+
+    """
+    w = np.asarray(tbl['x','y','z','vx','vy','vz'])
+    w = w.view('float64').reshape(len(tbl),6)
+    return w
