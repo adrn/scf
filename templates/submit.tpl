@@ -16,10 +16,10 @@
 date
 
 #Command to execute Python program
-cd /vega/astro/users/amp2217/projects/morphology/simulations/runs/{name}
+cd /vega/astro/users/amp2217/projects/scf/simulations/runs/{name}
 make
 ./scf
-/vega/astro/users/amp2217/projects/gary/bin/moviesnap --path=/vega/astro/users/amp2217/projects/morphology/simulations/runs/{name}
+/vega/astro/users/amp2217/projects/scf/bin/moviesnap --path=/vega/astro/users/amp2217/projects/scf/simulations/runs/{name}
 
 date
 
