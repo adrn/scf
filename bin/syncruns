@@ -1,0 +1,1 @@
+echo `rsync -zvr --include="*.mp4" --include="*.png" --include="*/" --exclude="*" yeti:/vega/astro/users/amp2217/projects/scf/simulations/runs/* ~/projects/scf/simulations/runs/`
