@@ -20,9 +20,10 @@ import astropy.units as u
 from scf import project_path
 import scf.potential as sp
 
-def main(name, x, v, scfpars, potentials, overwrite=False, submit=False):
+def main(name, pos, vel, scfpars, potentials, overwrite=False, submit=False):
     run_path = os.path.abspath(os.path.join(project_path, "simulations", "runs"))
     template_path = os.path.abspath(os.path.join(project_path, "templates"))
+    src_path = os.path.abspath(os.path.join(project_path, "src"))
     logger.debug("Run path: {}".format(run_path))
 
     path = os.path.join(run_path, name)
@@ -44,14 +45,14 @@ def main(name, x, v, scfpars, potentials, overwrite=False, submit=False):
         os.makedirs(path)
 
     # parse pos and vel
-    x_vals,x_unit = x.split()
-    v_vals,v_unit = v.split()
+    x_vals,x_unit = pos.split()
+    v_vals,v_unit = vel.split()
 
-    x = map(float, x_vals.split(',')) * u.Unit(x_unit)
-    x = x.to(u.kpc).value
+    pos = map(float, x_vals.split(',')) * u.Unit(x_unit)
+    pos = pos.to(u.kpc).value
 
-    v = map(float, v_vals.split(',')) * u.Unit(v_unit)
-    v = v.to(u.km/u.s).value
+    vel = map(float, v_vals.split(',')) * u.Unit(v_unit)
+    vel = vel.to(u.km/u.s).value
 
     # combine all of the different blocks
     allblocks = dict()
@@ -61,7 +62,10 @@ def main(name, x, v, scfpars, potentials, overwrite=False, submit=False):
             if k not in allblocks:
                 allblocks[k] = ""
 
-            allblocks[k] += v + "\n\n"
+            allblocks[k] += v
+
+            if k != "SCFPOT":
+                allblocks[k] += "\n"
 
     # ------------------------------------------------------------------------
     # SCFPAR
@@ -69,7 +73,7 @@ def main(name, x, v, scfpars, potentials, overwrite=False, submit=False):
         base_SCFPAR = f.read()
 
     with open(os.path.join(path, "SCFPAR"), 'w') as f:
-        f.write(base_SCFPAR.format(x=x, v=v, **scfpars))
+        f.write(base_SCFPAR.format(x=pos, v=vel, **scfpars))
 
     # ------------------------------------------------------------------------
     # Makefile
@@ -106,11 +110,17 @@ def main(name, x, v, scfpars, potentials, overwrite=False, submit=False):
         f.write(allblocks['SCFPOT'])
 
     if submit:
-        with open(os.path.join(path, "submit.tpl"), 'r') as f:
+        with open(os.path.join(template_path, "submit.tpl"), 'r') as f:
             base_submit = f.read()
 
         with open(os.path.join(path, "submit.sh"), 'w') as f:
             f.write(base_submit.format(name=name, path=path))
+
+    # Copy scf.f and scf.h
+    shutil.copyfile(os.path.join(src_path, 'scf.f'),
+                    os.path.join(path, 'scf.f'))
+    shutil.copyfile(os.path.join(src_path, 'scf.h'),
+                    os.path.join(path, 'scf.h'))
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -126,7 +136,9 @@ if __name__ == '__main__':
                         default=False, help="DESTROY. DESTROY.")
 
     parser.add_argument("--name", dest="name", type=str, help="Name.", required=True)
-    parser.add_argument("--potential", dest="potential", type=str, help="Potential name.", required=True)
+    parser.add_argument("--potentials", dest="potentials", type=str,
+                        help="Potential names. One of: {0}".format(",".join(sp.__all__)),
+                        nargs='+', required=True)
     parser.add_argument("-s", "--submit", action="store_true", dest="submit",
                         default=True, help="Generate a submit.sh file as well.")
     parser.add_argument("--pos", dest="x", required=True,
@@ -190,6 +202,6 @@ if __name__ == '__main__':
     if args.scfbi_path is None:
         scfpars['SCFBIpath'] = os.path.abspath(os.path.join(project_path, 'src', 'SCFBI'))
 
-    main(name=args.name, x=args.x, v=args.v, scfpars=scfpars,
-         potential_name=args.potential, overwrite=args.overwrite,
+    main(name=args.name, pos=args.x, vel=args.v, scfpars=scfpars,
+         potentials=args.potentials, overwrite=args.overwrite,
          submit=args.submit)
