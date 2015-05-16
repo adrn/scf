@@ -1432,7 +1432,7 @@ C                 CALL iocoef
 C                     ------
               END IF
 C
-	      IF(MOD(n,noutbod).EQ.0) THEN
+	      IF( (MOD(n,noutbod).EQ.0) .OR. (n.EQ.nsteps)) THEN
                   CALL outbods
             END IF
 C                                         -------
