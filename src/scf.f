@@ -1369,41 +1369,38 @@ C=======================================================================
 
 C        CALL outterm(' step completed: ',n)
 C            -------
-	CALL outone
+	    CALL outone
 C            ------
 
-        IF(n.EQ.0) THEN
-
-           IF(external_field)THEN
-c	      CALL stepsize
-C                  --------
+      IF(n.EQ.0) THEN
+          IF(external_field)THEN
               IF(ntide.EQ.0)CALL findrem(n)
-C                                -------
-                    IF(.NOT.selfgrav)THEN
-                       DO 10 i=1,nbodies
+C                     -------
+                  IF(.NOT.selfgrav)THEN
+                      DO 10 i=1,nbodies
                           x(i)=x(i)+xframe
                           y(i)=y(i)+yframe
                           z(i)=z(i)+zframe
- 10                    CONTINUE
-                       xframe=zero
-                       yframe=zero
-                       zframe=zero
-                    END IF
-           ELSE
-              CALL outbods
+ 10                   CONTINUE
+                          xframe=zero
+                          yframe=zero
+                          zframe=zero
+                  END IF
+              ELSE
+                  CALL outbods
 C                  -------
-              CALL iocoef
+                  CALL iocoef
 C                  ------
-           END IF
+              END IF
 C
-           CALL outlog
+              CALL outlog
 C               ------
-        ELSE
+          ELSE
 
-           IF(MOD(n,noutlog).EQ.0) THEN
-              CALL outterm(' step completed: ',n)
+              IF((MOD(n,noutlog).EQ.0).OR. (n.EQ.nsteps)) THEN
+                  CALL outterm(' step completed: ',n)
 
-              CALL corrvel('correct')
+                  CALL corrvel('correct')
 C                  -------
               IF(external_field)THEN
 	         IF(selfgrav)THEN
@@ -1432,7 +1429,7 @@ C                 CALL iocoef
 C                     ------
               END IF
 C
-	      IF( (MOD(n,noutbod).EQ.0) .OR. (n.EQ.(nsteps-1))) THEN
+	      IF( (MOD(n,noutbod).EQ.0) .OR. (n.EQ.nsteps)) THEN
                   CALL outbods
             END IF
 C                                         -------
