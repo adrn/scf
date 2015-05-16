@@ -21,6 +21,23 @@ __all__ = ["SCFReader", "tbl_to_w"]
 
 class SCFReader(object):
 
+    def __init__(self, path):
+        """
+        Class for reading output from an SCF N-body simulation.
+
+        Parameters
+        ----------
+        path : str
+            Path to the output files.
+        """
+
+        if not os.path.exists(path):
+            raise IOError("Path to output '{}' does not exist.".format(path))
+
+        self.path = path
+        self.sim_units = self._read_units()
+        self.nparticles = None
+
     def _read_units(self):
         """
         Read and parse the SCFPAR file containing simulation parameters
