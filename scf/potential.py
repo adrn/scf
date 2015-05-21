@@ -19,7 +19,7 @@ def MiyamotoNagaiPotential():
     """
 
     saveblock = """
-      REAL*8 a,b,GM,
+      REAL*8 a,b,GM,r2,z2,
      &       sqz2b2,tdr,tdz,phim
       SAVE a,b,GM
     """
@@ -33,6 +33,8 @@ C           Miyamoto-Nagai parameters
 
     pot_acc = """
 C     Compute potential, acceleration for Miyamoto-Nagai
+      r2 = xx*xx + yy*yy
+      z2 = zz*zz
       sqz2b2 = DSQRT(z2 + b*b)
       tdr = GM/(r2 + (a + sqz2b2)**2)**1.5
       tdz = tdr*(a/sqz2b2 + 1.)
@@ -66,7 +68,7 @@ def HernquistPotential():
 
     saveblock = """
       REAL*8 GMs,hs,
-     &       r2,z2,rad,tsrad,phis
+     &       rad,tsrad,phis
       SAVE GMs, hs
     """
 
@@ -78,9 +80,7 @@ C           Hernquist parameters
 
     pot_acc = """
 C     Compute potential, acceleration due to spheroid
-      r2 = xx*xx + yy*yy
-      z2 = zz*zz
-      rad = DSQRT(r2+z2)
+      rad = DSQRT(xx*xx + yy*yy + zz*zz)
       tsrad = GMs/(rad+hs)**2/rad
       phis = -GMs/(rad+hs)
       ax(i) = ax(i) - strength*tsrad*xx
