@@ -8,6 +8,7 @@ __author__ = "adrn <adrn@astro.columbia.edu>"
 
 # Standard library
 import os
+import glob
 
 # Third-party
 import astropy.units as u
@@ -144,6 +145,28 @@ class SCFReader(object):
             tbl[colname].unit = colunit
 
         return tbl
+
+    def last_snap(self, units=None):
+        """
+        Read the final SNAP file and return the data. By default,
+        returns data in simulation units, but this can be changed with
+        the `units` kwarg.
+
+        Parameters
+        ----------
+        units : dict (optional)
+            A unit system to transform the data to. If None, will return
+            the data in simulation units.
+
+        Returns
+        -------
+        tbl : :class:`~astropy.table.Table`
+            Table containing the data in the SNAP file.
+        """
+        # read the first line to get the numer of particles and timestep
+        all_snaps = glob.glob(os.path.join(self.path, "SNAP*"))
+        ix = np.argmax([int(os.path.basename(fn)[4:]) for fn in all_snaps])
+        return self.read_snap(all_snaps[ix], units=units)
 
     def read_cen(self, units=None):
         """
