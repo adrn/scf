@@ -118,7 +118,7 @@ def main(name, pos, vel, scfpars, potentials, run_path, overwrite=False, submit=
             base_submit = f.read()
 
         with open(os.path.join(path, "submit.sh"), 'w') as f:
-            f.write(base_submit.format(name=name, path=path))
+            f.write(base_submit.format(path=path))
 
     # Copy scf.f and scf.h
     shutil.copyfile(os.path.join(src_path, 'scf.f'),
