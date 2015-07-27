@@ -20,8 +20,8 @@ import astropy.units as u
 from scf import project_path
 import scf.potential as sp
 
-def main(name, pos, vel, scfpars, potentials, overwrite=False, submit=False):
-    run_path = os.path.abspath(os.path.join(project_path, "simulations", "runs"))
+def main(name, pos, vel, scfpars, potentials, run_path, overwrite=False, submit=False):
+    # run_path = os.path.abspath(os.path.join(project_path, "simulations", "runs"))
     template_path = os.path.abspath(os.path.join(project_path, "templates"))
     src_path = os.path.abspath(os.path.join(project_path, "src"))
     logger.debug("Run path: {}".format(run_path))
@@ -138,6 +138,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--overwrite", action="store_true", dest="overwrite",
                         default=False, help="DESTROY. DESTROY.")
 
+    parser.add_argument("--path", "-p", dest="path", type=str, help="Path.", required=True)
     parser.add_argument("--name", dest="name", type=str, help="Name.", required=True)
     parser.add_argument("--potentials", dest="potentials", type=str,
                         help="Potential names. One of: {0}".format(",".join(sp.__all__)),
@@ -207,4 +208,4 @@ if __name__ == '__main__':
 
     main(name=args.name, pos=args.x, vel=args.v, scfpars=scfpars,
          potentials=args.potentials, overwrite=args.overwrite,
-         submit=args.submit)
+         submit=args.submit, path=args.path)
