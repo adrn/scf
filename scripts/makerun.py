@@ -21,6 +21,7 @@ from scf import project_path
 import scf.potential as sp
 
 def main(name, pos, vel, scfpars, potentials, run_path, overwrite=False, submit=False):
+    run_path = os.path.abspath(run_path)
     # run_path = os.path.abspath(os.path.join(project_path, "simulations", "runs"))
     template_path = os.path.abspath(os.path.join(project_path, "templates"))
     src_path = os.path.abspath(os.path.join(project_path, "src"))
@@ -208,4 +209,4 @@ if __name__ == '__main__':
 
     main(name=args.name, pos=args.x, vel=args.v, scfpars=scfpars,
          potentials=args.potentials, overwrite=args.overwrite,
-         submit=args.submit, path=args.path)
+         submit=args.submit, run_path=args.path)
