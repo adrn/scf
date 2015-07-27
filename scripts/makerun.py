@@ -28,7 +28,10 @@ def main(name, pos, vel, scfpars, potentials, overwrite=False, submit=False):
 
     path = os.path.join(run_path, name)
     if os.path.exists(path) and overwrite:
-        logger.warning("Path '{}' already exists -- are you sure you want to overwrite?"
+        logger.info("nuking directory...")
+        shutil.rmtree(path)
+    elif os.path.exists(path) and not overwrite:
+        logger.warning("Path '{}' already exists -- do you want to overwrite?"
                        .format(path))
         yn = raw_input("[y/N]: ")
         if yn.lower().strip() == 'y':
@@ -37,7 +40,7 @@ def main(name, pos, vel, scfpars, potentials, overwrite=False, submit=False):
         else:
             logger.info("aborting...")
             sys.exit(0)
-    elif os.path.exists(path) and not overwrite:
+
         raise IOError("Path '{}' already exists!".format(path))
         sys.exit(0)
 
