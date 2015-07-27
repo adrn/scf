@@ -73,11 +73,12 @@ def main(name, pos, vel, scfpars, potentials, run_path, overwrite=False, submit=
 
     # ------------------------------------------------------------------------
     # SCFPAR
+    scfbipath = os.path.join(src_path, "SCFBI")
     with open(os.path.join(template_path, "SCFPAR.tpl"), 'r') as f:
         base_SCFPAR = f.read()
 
     with open(os.path.join(path, "SCFPAR"), 'w') as f:
-        f.write(base_SCFPAR.format(x=pos, v=vel, **scfpars))
+        f.write(base_SCFPAR.format(x=pos, v=vel, scfbipath=scfbipath, **scfpars))
 
     # ------------------------------------------------------------------------
     # Makefile

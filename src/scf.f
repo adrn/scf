@@ -782,14 +782,22 @@ C=======================================================================
 
 C      APW hacks:
       INTEGER i
-      CHARACTER*30 filepar
-	    CHARACTER*30 filename
+      CHARACTER*128 filepar
+	    CHARACTER*128 filename
 
 C      filepar=ibodfile
 C      filename=filepar(1:5)
 C TODO: This is a total HACK
       filepar = ibodfile_apw
-	    filename = filepar(1:20)
+
+      DO 86 i=1,126
+	        filename = filepar(i:i+2)
+          IF (filename(1:2).EQ."/".AND.filename(2:3).EQ." ") THEN
+              EXIT
+          ENDIF
+   86  CONTINUE
+
+      filename = filepar(1:i+2)
       PRINT *, filename
 
       OPEN(ubodsin,FILE=filename,STATUS='OLD')
