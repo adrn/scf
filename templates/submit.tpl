@@ -16,7 +16,7 @@
 date
 
 #Command to execute Python program
-{path}
+cd {path}
 make
 ./scf
 /vega/astro/users/amp2217/projects/scf/bin/moviesnap --path={path}
