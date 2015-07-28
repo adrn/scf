@@ -920,7 +920,7 @@ C            ------
 C All particles initially bound.
         DO 10 i=1,nbodies
            ibound(i)=1
-	   tub(i)=zero
+	         tub(i)=zero
  10     CONTINUE
 
         CALL startout
@@ -1158,14 +1158,14 @@ C=======================================================================
 
         nsnap=nsnap+1
 
-	sstring(1:4)='SNAP'
+	      sstring(1:4)='SNAP'
         sstring(5:5)=nstring(1+nsnap/100:1+nsnap/100)
         istring=1+MOD(nsnap,100)/10
         sstring(6:6)=nstring(istring:istring)
         istring=1+MOD(nsnap,10)
         sstring(7:7)=nstring(istring:istring)
         filename=sstring(1:7)
-	WRITE(6,'(a)')filename
+	      WRITE(6,'(a)')filename
         OPEN(UNIT=ubodsout,FILE=filename,STATUS='NEW')
 
         WRITE(ubodsout,20) nbodies,tnow
@@ -1381,76 +1381,75 @@ C            -------
 C            ------
 
       IF(n.EQ.0) THEN
-          IF(external_field)THEN
-              IF(ntide.EQ.0)CALL findrem(n)
+        IF(external_field)THEN
+          IF (ntide.EQ.0) CALL findrem(n)
 C                     -------
-                  IF(.NOT.selfgrav)THEN
-                      DO 10 i=1,nbodies
-                          x(i)=x(i)+xframe
-                          y(i)=y(i)+yframe
-                          z(i)=z(i)+zframe
- 10                   CONTINUE
-                          xframe=zero
-                          yframe=zero
-                          zframe=zero
-                  END IF
-              ELSE
-                  CALL outbods
-C                  -------
-                  CALL iocoef
+          IF(.NOT.selfgrav)THEN
+            DO 10 i=1,nbodies
+              x(i)=x(i)+xframe
+              y(i)=y(i)+yframe
+              z(i)=z(i)+zframe
+ 10         CONTINUE
+            xframe=zero
+            yframe=zero
+            zframe=zero
+          END IF
+        ELSE
+          CALL outbods
+C              -------
+          CALL iocoef
 C                  ------
-              END IF
+        END IF
 C
-              CALL outlog
+        CALL outlog
 C               ------
-          ELSE
+      ELSE
 
-              IF((MOD(n,noutlog).EQ.0).OR. (n.EQ.nsteps)) THEN
-                  CALL outterm(' step completed: ',n)
+        IF((MOD(n,noutlog).EQ.0).OR. (n.EQ.nsteps)) THEN
+          WRITE(*,*) '-- selfgrav', selfgrav
+          CALL outterm(' step completed: ',n)
 
-                  CALL corrvel('correct')
-C                  -------
-              IF(external_field)THEN
-	         IF(selfgrav)THEN
-c                    CALL stepsize
-C                        --------
-		    CALL findrem(n)
-C                        -------
-                    IF(.NOT.selfgrav)THEN
-                       DO 20 i=1,nbodies
-                          x(i)=x(i)+xframe
-                          y(i)=y(i)+yframe
-                          z(i)=z(i)+zframe
- 20                    CONTINUE
-                       xframe=zero
-                       yframe=zero
-                       zframe=zero
-                    END IF
+          CALL corrvel('correct')
+C         -------
+          IF(external_field)THEN
+	          IF(selfgrav)THEN
+		          CALL findrem(n)
+C              -------
+              IF(.NOT.selfgrav)THEN
+                DO 20 i=1,nbodies
+                    x(i)=x(i)+xframe
+                    y(i)=y(i)+yframe
+                    z(i)=z(i)+zframe
+ 20             CONTINUE
+                xframe=zero
+                yframe=zero
+                zframe=zero
+              END IF
 C	         ELSE
 C                    IF(n.EQ.nsteps)CALL outbods
 C                                       -------
-                 END IF
-              ELSE IF(n.EQ.nsteps) THEN
+            END IF
+          ELSE IF(n.EQ.nsteps) THEN
 C                 CALL outbods
 C                     -------
 C                 CALL iocoef
 C                     ------
-              END IF
+          END IF
 C
-	      IF( (MOD(n,noutbod).EQ.0) .OR. (n.EQ.nsteps)) THEN
-                  CALL outbods
-            END IF
+	        IF( (MOD(n,noutbod).EQ.0) .OR. (n.EQ.nsteps)) THEN
+            CALL outbods
+          END IF
 C                                         -------
-              CALL outlog
+          CALL outlog
 C                  ------
-              CALL corrvel('reset  ')
+          CALL corrvel('reset  ')
 C                  -------
-           ENDIF
-
         ENDIF
 
-        RETURN
-        END
+      ENDIF
+
+      RETURN
+      END
 C***********************************************************************
 C
 C
@@ -1508,8 +1507,8 @@ C=======================================================================
 
         INCLUDE 'scf.h'
 
-	CHARACTER*7 filename
-	CHARACTER*8 filepar
+	      CHARACTER*7 filename
+	      CHARACTER*8 filepar
 
 C=======================================================================
 
