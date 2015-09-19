@@ -208,6 +208,20 @@ class SCFReader(object):
 
         return tbl
 
+    def snaps(self, units=None):
+        """
+        Generator for iterative over SNAP files.
+
+        ...
+        """
+
+        # read the first line to get the numer of particles and timestep
+        all_snaps = glob.glob(os.path.join(self.path, "SNAP*"))
+        ix = np.argsort([int(os.path.basename(fn)[4:]) for fn in all_snaps])
+
+        for i in ix:
+            yield self.read_snap(all_snaps[i], units=units)
+
 def tbl_to_w(tbl):
     """
     Convert a table-like object with column names 'x', 'y', 'z',
