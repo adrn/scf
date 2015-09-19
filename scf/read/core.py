@@ -208,11 +208,9 @@ class SCFReader(object):
 
         return tbl
 
-    def snaps(self, units=None):
+    def snapfiles(self):
         """
-        Generator for iterative over SNAP files.
 
-        ...
         """
 
         # read the first line to get the numer of particles and timestep
@@ -220,7 +218,17 @@ class SCFReader(object):
         ix = np.argsort([int(os.path.basename(fn)[4:]) for fn in all_snaps])
 
         for i in ix:
-            yield self.read_snap(all_snaps[i], units=units)
+            yield all_snaps[i]
+
+    def snaps(self, units=None):
+        """
+        Generator for iterative over SNAP files.
+
+        ...
+        """
+
+        for fn in self.snapfiles():
+            yield self.read_snap(fn, units=units)
 
 def tbl_to_w(tbl):
     """
